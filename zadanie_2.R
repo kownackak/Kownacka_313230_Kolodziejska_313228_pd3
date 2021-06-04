@@ -1,9 +1,6 @@
 library(dplyr)
 library(XML)
 library(plyr)
-library(ggplot2)
-library(hrbrthemes)
-library(viridis)
 
 rep <- function(PostHistory, Users){
     wynik_1 <- PostHistory %>%
@@ -15,6 +12,8 @@ rep <- function(PostHistory, Users){
     wynik <- wynik[order(wynik$BlockedPostsNumber, decreasing = TRUE), ]
     rep <- merge(wynik, Users[c("Id", "Reputation")], by.x = "UserId", by.y = "Id")
     rep <- rep[order(rep$BlockedPostsNumber, decreasing = TRUE), ]
+    rownames(rep) <- NULL
+    rep
 }
 
 # Chrzeœcijanizm
@@ -30,45 +29,45 @@ reputation_CH <- rep(PostHistoryCH, UsersCH)
 
 # Judaizm
 
-PostHistoryJ <- xmlParse("judaizm//PostHistory.xml",useInternalNodes = TRUE)
+PostHistoryJ <- xmlParse("judaizm/PostHistory.xml",useInternalNodes = TRUE)
 PostHistoryJ <- xmlToList(PostHistoryJ)
 PostHistoryJ <- ldply(PostHistoryJ, rbind)
-UsersJ <- xmlParse("judaizm//Users.xml",useInternalNodes = TRUE)
+UsersJ <- xmlParse("judaizm/Users.xml",useInternalNodes = TRUE)
 UsersJ <- xmlToList(UsersJ)
 UsersJ <- ldply(UsersJ, rbind)
 
 reputation_J <- rep(PostHistoryJ, UsersJ)
 
-
 # Islam
 
-PostHistoryI <- xmlParse("islam//PostHistory.xml",useInternalNodes = TRUE)
+PostHistoryI <- xmlParse("islam/PostHistory.xml",useInternalNodes = TRUE)
 PostHistoryI <- xmlToList(PostHistoryI)
 PostHistoryI <- ldply(PostHistoryI, rbind)
-UsersI <- xmlParse("islam//Users.xml",useInternalNodes = TRUE)
+UsersI <- xmlParse("islam/Users.xml",useInternalNodes = TRUE)
 UsersI <- xmlToList(UsersI)
 UsersI <- ldply(UsersI, rbind)
 
 reputation_I <- rep(PostHistoryI, UsersI)
+
 View(reputation_CH)
 View(reputation_I)
 View(reputation_J)
 
-sum(sapply(reputation_CH$BlockedPostsNumber, sum))
-
-nrow(reputation_CH)
 
 # tworzenie tabelki porównuj¹cej iloœæ u¿ytkowników z zablokowanymi postami w ka¿dym z forum
+
 tab <- data.frame("Religion" = c("CH", "J", "I"), 
                   "UserNumber" = c(nrow(reputation_CH), nrow(reputation_J), nrow(reputation_I)), 
                   "BlockedPostNumber" = c(sum(sapply(reputation_CH$BlockedPostsNumber, sum)),
-                                                                sum(sapply(reputation_J$BlockedPostsNumber, sum)),
-                                                                sum(sapply(reputation_I$BlockedPostsNumber, sum))))
+                                          sum(sapply(reputation_J$BlockedPostsNumber, sum)),
+                                          sum(sapply(reputation_I$BlockedPostsNumber, sum))))
+
+
 View(tab)
 
 # tworzenie wykresu
 
-wykres <- function(counts){
+wykres <- function(counts, title){
     
     t <- seq(0, 2*pi, length.out = 100) 
     x <- cos(t)
@@ -87,7 +86,7 @@ wykres <- function(counts){
         ty <- mean(y[ xy[i-1]:xy[i] ])
         shift <- (par("usr")[2]-par("usr")[1])
     }
-    title("Liczba zablokowanych postów")
+    title(title)
     legend("bottom", col = kolory, pch = 16, 
            legend = sprintf("%s: %.2f%%", names(counts), 100*frac))
     polygon(x <- 0.5 * cos(t),
@@ -95,5 +94,5 @@ wykres <- function(counts){
     invisible(NULL)
 }
 
-wykres <- wykres(c("Chrzeœcijañstwo" = 208, "Judaizm" = 408, "Islam" = 104))
-
+wykres_post <- wykres(c("Chrzeœcijañstwo" = 208, "Judaizm" = 408, "Islam" = 104), "Liczba zablokowanych i usuniêtych postów")
+wykres_user <- wykres(c("Chrzeœcijañstwo" = 65, "Judaizm" = 93, "Islam" = 58), "Liczba u¿ytkowników z zablokowanymi i usuniêtymi postami")
